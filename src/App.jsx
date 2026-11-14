@@ -220,12 +220,17 @@ function UploadPage({ session }) {
       return;
     }
 
+    const { data: publicData } = supabase.storage
+      .from("videos")
+      .getPublicUrl(path);
+
     const { error: dbError } = await supabase
       .from("videos")
       .insert({
         id,
         title: title.trim() || file.name,
-        storage_path: path
+        storage_path: path,
+        public_url: publicData.publicUrl
       });
 
     if (dbError) {
