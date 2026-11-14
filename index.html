@@ -1,59 +1,12 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Videyku - Video Hosting</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #101827;
-      color: white;
-      text-align: center;
-    }
-    header {
-      padding: 25px;
-      background: #17243a;
-      font-size: 28px;
-      font-weight: bold;
-    }
-    main {
-      padding: 35px 20px;
-    }
-    .panel {
-      max-width: 450px;
-      margin: auto;
-      padding: 25px;
-      background: #1d2b42;
-      border-radius: 14px;
-    }
-    input, button {
-      box-sizing: border-box;
-      width: 100%;
-      padding: 14px;
-      margin-top: 15px;
-      border: 0;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-    button {
-      background: #2878f0;
-      color: white;
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
-  <header>VIDEYKU</header>
-  <main>
-    <div class="panel">
-      <h2>Upload Video</h2>
-      <p>Selamat datang di Videyku</p>
-      <input type="file" accept="video/*">
-      <button type="button">Pilih Video</button>
-    </div>
-  </main>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Videyku</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
