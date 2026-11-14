@@ -1,6 +1,8 @@
 
 import { useEffect, useState } from "react";
-import { Link, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import {
+  Link, Route, Routes, useNavigate, useParams
+} from "react-router-dom";
 import { supabase } from "./supabase";
 import AdSlot from "./components/AdSlot";
 import {
@@ -416,5 +418,4 @@ export default function App() {
       </footer>
     </div>
   );
-                                                         }
-      
+}
