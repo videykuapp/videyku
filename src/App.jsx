@@ -195,7 +195,7 @@ function UploadPage({ session }) {
       return;
     }
 
-    if (file.size > 500 * 1024 * 1024) {
+    if (file.size > 50 * 1024 * 1024) {
       setMessage("Ukuran maksimum konfigurasi awal adalah 500 MB.");
       return;
     }
@@ -266,7 +266,7 @@ function UploadPage({ session }) {
         <label className="file-picker">
           <UploadCloud size={28}/>
           <b>{file ? file.name : "Pilih video dari perangkat"}</b>
-          <small>MP4, MOV, WebM • Maks. 500 MB</small>
+          <small>MP4, MOV, WebM • Maks. 50 MB</small>
           <input type="file" accept="video/*"
             onChange={e => setFile(e.target.files?.[0] || null)}/>
         </label>
