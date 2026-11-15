@@ -40,75 +40,24 @@ function Header({ session, onLogout }) {
   );
 }
 
+
 function Home() {
-  const [videos, setVideos] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let live = true;
-
-    async function load() {
-      const { data, error } = await supabase
-        .from("videos")
-        .select("id,title,created_at")
-        .order("created_at", { ascending: false });
-
-      if (live) {
-        setVideos(error ? [] : data || []);
-        setLoading(false);
-      }
-    }
-
-    load();
-    return () => { live = false; };
-  }, []);
-
   return (
     <>
       <section className="hero">
         <div className="eyebrow">UPLOAD • SHARE • WATCH</div>
-        <h1>Video kamu,<br/><em>lebih mudah dibagikan.</em></h1>
-        <p>Unggah video dan bagikan tautannya dalam beberapa langkah.</p>
+        <h1>Bagikan video<br/><em>dengan mudah.</em></h1>
+        <p>Unggah video dan bagikan tautannya.</p>
         <Link className="primary" to="/upload">
           <UploadCloud size={18}/> Upload video
         </Link>
       </section>
-
-      <AdSlot/>
-
-      <section className="section-head">
-        <div>
-          <div className="eyebrow">LIBRARY</div>
-          <h2>Video terbaru</h2>
-        </div>
-        <span className="muted">{videos.length} video</span>
-      </section>
-
-      {loading ? (
-        <p className="muted">Memuat video…</p>
-      ) : videos.length ? (
-        <div className="video-grid">
-          {videos.map(v => (
-            <Link className="video-card" to={`/v/${v.id}`} key={v.id}>
-              <div className="thumb">
-                <Play size={30} fill="currentColor"/>
-              </div>
-              <b>{v.title}</b>
-              <small>{new Date(v.created_at).toLocaleDateString("id-ID")}</small>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <div className="empty">
-          <Video size={34}/>
-          <b>Belum ada video</b>
-          <span>Video yang diunggah akan muncul di sini.</span>
-        </div>
-      )}
+      <AdSlot />
     </>
   );
 }
 
+      
 function Admin({ session }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
