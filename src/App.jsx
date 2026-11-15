@@ -374,6 +374,8 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [ready, setReady] = useState(false);
 
+  const appMode = import.meta.env.VITE_APP_MODE || "upload";
+
   useEffect(() => {
     if (!supabase) {
       setReady(true);
@@ -392,27 +394,33 @@ export default function App() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  async function logout() {
-    await supabase.auth.signOut();
-  }
-
-  if (!supabase) return <SetupNotice/>;
+  if (!supabase) return <SetupNotice />;
   if (!ready) return <main className="narrow">Memuat Videyku…</main>;
 
   return (
     <div className="app-shell">
-      <Header session={session} onLogout={logout}/>
       <div className="content">
-        <Routes>
-          <Route path="/" element={<Home/>}/>
-          <Route path="/admin" element={<Admin session={session}/>}/>
-          <Route path="/upload" element={<UploadPage session={session}/>}/>
-          <Route path="/v/:id" element={<VideoPage session={session}/>}/>
-        </Routes>
+        {appMode === "upload" ? (
+          <Routes>
+            <Route path="/" element={<UploadPage session={session} />} />
+            <Route path="/upload" element={<UploadPage session={session} />} />
+            <Route path="*" element={<UploadPage session={session} />} />
+          </Routes>
+        ) : (
+          <Routes>
+            <Route path="/v/:id" element={<VideoPage session={session} />} />
+            <Route
+              path="*"
+              element={
+                <main className="narrow">
+                  <h1>Videyku</h1>
+                  <p>Buka tautan video untuk menontonnya.</p>
+                </main>
+              }
+            />
+          </Routes>
+        )}
       </div>
-      <footer>
-        © {new Date().getFullYear()} Videyku. Upload and share responsibly.
-      </footer>
     </div>
   );
 }
