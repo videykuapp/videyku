@@ -180,11 +180,6 @@ function UploadPage({ session }) {
   async function upload(e) {
     e.preventDefault();
 
-    if (!session) {
-      setMessage("Login sebagai admin terlebih dahulu.");
-      return;
-    }
-
     if (!file) {
       setMessage("Pilih file video terlebih dahulu.");
       return;
@@ -251,10 +246,6 @@ function UploadPage({ session }) {
       <div className="eyebrow">UPLOAD VIDEO</div>
       <h1>Tambahkan video</h1>
 
-      {!session && (
-        <p className="notice">Login sebagai admin sebelum mengunggah.</p>
-      )}
-
       <form className="panel form" onSubmit={upload}>
         <label>
           Judul video
@@ -273,7 +264,8 @@ function UploadPage({ session }) {
 
         {message && <p className="error">{message}</p>}
 
-        <button className="primary" disabled={progress || !session}>
+<button className="primary" disabled={progress}>
+        
           {progress ? "Mengunggah…" : "Upload sekarang"}
         </button>
 
