@@ -235,7 +235,7 @@ function UploadPage({ session }) {
       return;
     }
 
-    navigate(`/v/${id}`);
+    window.location.href = `https://videyku-two.vercel.app/v/${id}`;
   }
 
   return (
