@@ -40,7 +40,6 @@ function Header({ session, onLogout }) {
   );
 }
 
-
 function Home() {
   return (
     <>
@@ -57,7 +56,6 @@ function Home() {
   );
 }
 
-      
 function Admin({ session }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -124,7 +122,6 @@ function UploadPage({ session }) {
   const [title, setTitle] = useState("");
   const [progress, setProgress] = useState(false);
   const [message, setMessage] = useState("");
-  const navigate = useNavigate();
 
   async function upload(e) {
     e.preventDefault();
@@ -140,7 +137,7 @@ function UploadPage({ session }) {
     }
 
     if (file.size > 50 * 1024 * 1024) {
-      setMessage("Ukuran maksimum konfigurasi awal adalah 500 MB.");
+      setMessage("Ukuran maksimum adalah 50 MB.");
       return;
     }
 
@@ -213,8 +210,7 @@ function UploadPage({ session }) {
 
         {message && <p className="error">{message}</p>}
 
-<button className="primary" disabled={progress}>
-        
+        <button className="primary" disabled={progress}>
           {progress ? "Mengunggah…" : "Upload sekarang"}
         </button>
 
@@ -229,7 +225,6 @@ function UploadPage({ session }) {
 function VideoPage({ session }) {
   const { id } = useParams();
   const [video, setVideo] = useState(null);
-  const [url, setUrl] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
@@ -242,32 +237,41 @@ function VideoPage({ session }) {
         .from("videos")
         .select("*")
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
-        if (live) setError("Video tidak ditemukan.");
+        if (live) setError(
+          error ? `Gagal mengambil video: ${error.message}` :
+          "Video tidak ditemukan."
+        );
         return;
       }
 
-      const { data: publicData } = supabase.storage
-        .from("videos")
-        .getPublicUrl(data.storage_path);
+      const videoUrl = data.public_url ||
+        supabase.storage.from("videos")
+          .getPublicUrl(data.storage_path).data.publicUrl;
 
       if (live) {
-        setVideo(data);
-        setUrl(publicData.publicUrl);
+        setVideo({ ...data, videoUrl });
       }
     }
 
     load();
-    return () => { live = false; };
+
+    return () => {
+      live = false;
+    };
   }, [id]);
 
   async function remove() {
     if (!session || !video || !confirm("Hapus video ini?")) return;
 
-    await supabase.storage.from("videos").remove([video.storage_path]);
+    await supabase.storage
+      .from("videos")
+      .remove([video.storage_path]);
+
     await supabase.from("videos").delete().eq("id", id);
+
     navigate("/");
   }
 
@@ -291,7 +295,7 @@ function VideoPage({ session }) {
       </Link>
 
       <div className="player">
-        <video controls playsInline preload="metadata" src={url}>
+        <video controls playsInline preload="metadata" src={video.videoUrl}>
           Browser kamu tidak mendukung pemutar video.
         </video>
       </div>
@@ -300,6 +304,7 @@ function VideoPage({ session }) {
 
       <div className="share">
         <input readOnly value={window.location.href}/>
+
         <button className="secondary" onClick={async () => {
           await navigator.clipboard.writeText(window.location.href);
           setCopied(true);
@@ -350,6 +355,7 @@ export default function App() {
         session={session}
         onLogout={() => supabase.auth.signOut()}
       />
+
       <div className="content">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -358,6 +364,7 @@ export default function App() {
           <Route path="/v/:id" element={<VideoPage session={session} />} />
         </Routes>
       </div>
+
       <footer>
         © {new Date().getFullYear()} Videyku. Upload and share responsibly.
       </footer>
