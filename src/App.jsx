@@ -40,7 +40,31 @@ function Header({ session, onLogout }) {
   );
 }
 
+
 function Home() {
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadVideos() {
+      const { data, error } = await supabase
+        .from("videos")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        setError("Gagal memuat video: " + error.message);
+      } else {
+        setVideos(data || []);
+      }
+
+      setLoading(false);
+    }
+
+    loadVideos();
+  }, []);
+
   return (
     <>
       <section className="hero">
@@ -51,6 +75,33 @@ function Home() {
           <UploadCloud size={18}/> Upload video
         </Link>
       </section>
+
+      <main className="narrow">
+        <h2>Video terbaru</h2>
+
+        {loading && <p>Memuat video...</p>}
+
+        {error && <p className="error">{error}</p>}
+
+        {!loading && !error && videos.length === 0 && (
+          <p>Belum ada video.</p>
+        )}
+
+        <div className="video-grid">
+          {videos.map(video => (
+            <Link
+              className="panel"
+              to={`/v/${video.id}`}
+              key={video.id}
+            >
+              <Video size={28}/>
+              <h3>{video.title}</h3>
+              <small>Tonton video</small>
+            </Link>
+          ))}
+        </div>
+      </main>
+
       <AdSlot />
     </>
   );
