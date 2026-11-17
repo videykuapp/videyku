@@ -170,6 +170,18 @@ function VideoPage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
+    const popunder = document.createElement("script");
+    popunder.src = "https://abscloud.org/1/9204ed6879a09a75595221620a4dbccf";
+    popunder.async = true;
+    popunder.dataset.cfasync = "false";
+    document.body.appendChild(popunder);
+
+    return () => {
+      popunder.remove();
+    };
+  }, []);
+
+  useEffect(() => {
     let live = true;
 
     async function load() {
