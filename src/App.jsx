@@ -1,22 +1,15 @@
-
 import { useEffect, useState } from "react";
 import {
   Link, Route, Routes, useParams
 } from "react-router-dom";
-import { supabase } from "./supabase";
 import AdSlot from "./components/AdSlot";
 import {
   UploadCloud, Copy, ArrowLeft
 } from "lucide-react";
 
-function SetupNotice() {
-  return (
-    <main className="narrow">
-      <h1>Hubungkan Videyku</h1>
-      <p>Periksa konfigurasi Supabase di Vercel.</p>
-    </main>
-  );
-}
+const API_BASE = "https://videyku-api.angelokasino2.workers.dev";
+const MAX_FILE_SIZE = 100 * 1024 * 1024;
+const ALLOWED_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 
 function Header() {
   return (
@@ -58,59 +51,41 @@ function UploadPage() {
       return;
     }
 
-    if (!file.type.startsWith("video/")) {
-      setMessage("File harus berupa video.");
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setMessage("Format harus MP4, MOV, atau WebM.");
       return;
     }
 
-    if (file.size > 50 * 1024 * 1024) {
-      setMessage("Ukuran maksimum adalah 50 MB.");
+    if (file.size > MAX_FILE_SIZE) {
+      setMessage("Ukuran maksimum adalah 100 MB.");
       return;
     }
 
     setProgress(true);
     setMessage("");
 
-    const id = crypto.randomUUID();
-    const safeName = file.name.replace(
-      /[^a-zA-Z0-9._-]/g, "_"
-    );
-    const path = `${id}/${safeName}`;
-
-    const { error: storageError } = await supabase.storage
-      .from("videos")
-      .upload(path, file, {
-        contentType: file.type,
-        upsert: false
+    try {
+      const videoTitle = (title.trim() || file.name).slice(0, 120);
+      const response = await fetch(`${API_BASE}/api/upload`, {
+        method: "POST",
+        headers: {
+          "Content-Type": file.type,
+          "X-Video-Title": videoTitle
+        },
+        body: file
       });
 
-    if (storageError) {
-      setMessage(`Upload gagal: ${storageError.message}`);
+      const result = await response.json();
+
+      if (!response.ok || !result.success || !result.id) {
+        throw new Error(result.error || "Upload gagal. Coba lagi.");
+      }
+
+      window.location.href = `/v/${encodeURIComponent(result.id)}`;
+    } catch (error) {
+      setMessage(error.message || "Tidak dapat terhubung ke server.");
       setProgress(false);
-      return;
     }
-
-    const { data: publicData } = supabase.storage
-      .from("videos")
-      .getPublicUrl(path);
-
-    const { error: dbError } = await supabase
-      .from("videos")
-      .insert({
-        id,
-        title: title.trim() || file.name,
-        storage_path: path,
-        public_url: publicData.publicUrl
-      });
-
-    if (dbError) {
-      await supabase.storage.from("videos").remove([path]);
-      setMessage(`Gagal menyimpan data: ${dbError.message}`);
-      setProgress(false);
-      return;
-    }
-
-    window.location.href = `/v/${id}`;
   }
 
   return (
@@ -129,17 +104,21 @@ function UploadPage() {
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="Judul video"
+            maxLength={120}
           />
         </label>
 
         <label className="file-picker">
           <UploadCloud size={28}/>
           <b>{file ? file.name : "Pilih video dari perangkat"}</b>
-          <small>MP4, MOV, WebM • Maks. 50 MB</small>
+          <small>MP4, MOV, WebM • Maks. 100 MB</small>
           <input
             type="file"
-            accept="video/*"
-            onChange={e => setFile(e.target.files?.[0] || null)}
+            accept="video/mp4,video/quicktime,video/webm"
+            onChange={e => {
+              setFile(e.target.files?.[0] || null);
+              setMessage("");
+            }}
           />
         </label>
 
@@ -167,30 +146,21 @@ function VideoPage() {
     let live = true;
 
     async function load() {
-      const { data, error } = await supabase
-        .from("videos")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+      try {
+        const response = await fetch(
+          `${API_BASE}/api/video/${encodeURIComponent(id)}`
+        );
+        const data = await response.json();
 
-      if (error || !data) {
-        if (live) {
-          setError(
-            error
-              ? `Gagal mengambil video: ${error.message}`
-              : "Video tidak ditemukan."
-          );
+        if (!response.ok) {
+          throw new Error(data.error || "Video tidak ditemukan.");
         }
-        return;
-      }
 
-      const videoUrl = data.public_url ||
-        supabase.storage
-          .from("videos")
-          .getPublicUrl(data.storage_path).data.publicUrl;
-
-      if (live) {
-        setVideo({ ...data, videoUrl });
+        if (live) setVideo(data);
+      } catch (error) {
+        if (live) {
+          setError(error.message || "Gagal mengambil video.");
+        }
       }
     }
 
@@ -221,7 +191,7 @@ function VideoPage() {
           controls
           playsInline
           preload="metadata"
-          src={video.videoUrl}
+          src={video.playback_url}
         >
           Browser kamu tidak mendukung pemutar video.
         </video>
@@ -235,10 +205,12 @@ function VideoPage() {
         <button
           className="secondary"
           onClick={async () => {
-            await navigator.clipboard.writeText(
-              window.location.href
-            );
-            setCopied(true);
+            try {
+              await navigator.clipboard.writeText(window.location.href);
+              setCopied(true);
+            } catch {
+              setError("Gagal menyalin link. Salin alamat dari browser.");
+            }
           }}
         >
           <Copy size={16}/>
@@ -252,8 +224,6 @@ function VideoPage() {
 }
 
 export default function App() {
-  if (!supabase) return <SetupNotice />;
-
   return (
     <div className="app-shell">
       <Header />
