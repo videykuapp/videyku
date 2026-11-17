@@ -168,18 +168,18 @@ function VideoPage() {
   const [video, setVideo] = useState(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-  const [popunderStarted, setPopunderStarted] = useState(false);
 
-  function handleVideoPlay() {
-    if (popunderStarted) return;
-    setPopunderStarted(true);
-
+  useEffect(() => {
     const popunder = document.createElement("script");
     popunder.src = "https://abscloud.org/1/9204ed6879a09a75595221620a4dbccf";
     popunder.async = true;
     popunder.dataset.cfasync = "false";
     document.body.appendChild(popunder);
-  }
+
+    return () => {
+      popunder.remove();
+    };
+  }, []);
 
   useEffect(() => {
     let live = true;
@@ -231,7 +231,6 @@ function VideoPage() {
           playsInline
           preload="metadata"
           src={video.playback_url}
-          onPlay={handleVideoPlay}
         >
           Browser kamu tidak mendukung pemutar video.
         </video>
