@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 const API_BASE = "https://videyku-api.angelokasino2.workers.dev";
+const SMARTLINK_URL = "https://araplhn.org/4/f65190742ded7809cbc5d0af019e2a42";
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
 const ALLOWED_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 
@@ -18,6 +19,31 @@ function Header() {
         VIDEYKU<span>.</span>
       </Link>
     </header>
+  );
+}
+
+function SmartLinkAd() {
+  return (
+    <div
+      style={{
+        margin: "18px auto",
+        padding: "14px",
+        maxWidth: "420px",
+        textAlign: "center",
+        border: "1px solid rgba(128,128,128,.3)",
+        borderRadius: "10px",
+      }}
+    >
+      <small style={{ display: "block", marginBottom: "8px" }}>Iklan / Sponsor</small>
+      <a
+        href={SMARTLINK_URL}
+        target="_blank"
+        rel="sponsored noopener noreferrer"
+        style={{ display: "inline-block", fontWeight: 600 }}
+      >
+        Kunjungi sponsor
+      </a>
+    </div>
   );
 }
 
@@ -33,6 +59,7 @@ function Home() {
         </Link>
       </section>
       <AdSlot />
+      <SmartLinkAd />
     </>
   );
 }
@@ -219,6 +246,7 @@ function VideoPage() {
       </div>
 
       <AdSlot/>
+      <SmartLinkAd />
     </main>
   );
 }
