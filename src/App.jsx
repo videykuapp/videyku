@@ -66,8 +66,8 @@ function Home() {
 
 function UploadPage() {
   const [file, setFile] = useState(null);
-  const [title, setTitle] = useState("");
-  const [progress, setProgress] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadPercent, setUploadPercent] = useState(0);
   const [message, setMessage] = useState("");
 
   async function upload(e) {
@@ -88,30 +88,53 @@ function UploadPage() {
       return;
     }
 
-    setProgress(true);
+    setUploading(true);
+    setUploadPercent(0);
     setMessage("");
 
     try {
-      const videoTitle = (title.trim() || file.name).slice(0, 120);
-      const response = await fetch(`${API_BASE}/api/upload`, {
-        method: "POST",
-        headers: {
-          "Content-Type": file.type,
-          "X-Video-Title": videoTitle
-        },
-        body: file
+      const result = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", `${API_BASE}/api/upload`);
+        xhr.responseType = "json";
+        xhr.timeout = 600000;
+        xhr.setRequestHeader("Content-Type", file.type);
+
+        xhr.upload.addEventListener("progress", event => {
+          if (event.lengthComputable) {
+            setUploadPercent(Math.round((event.loaded / event.total) * 100));
+          }
+        });
+
+        xhr.addEventListener("load", () => {
+          const data = xhr.response || {};
+          if (xhr.status < 200 || xhr.status >= 300 || !data.success || !data.id) {
+            reject(new Error(data.error || `Upload gagal (HTTP ${xhr.status}). Silakan coba lagi.`));
+            return;
+          }
+          resolve(data);
+        });
+
+        xhr.addEventListener("error", () => {
+          reject(new Error("Koneksi terputus. Periksa internet lalu coba upload lagi."));
+        });
+
+        xhr.addEventListener("timeout", () => {
+          reject(new Error("Upload terlalu lama dan waktu tunggu habis. Silakan coba lagi."));
+        });
+
+        xhr.addEventListener("abort", () => {
+          reject(new Error("Upload dibatalkan."));
+        });
+
+        xhr.send(file);
       });
 
-      const result = await response.json();
-
-      if (!response.ok || !result.success || !result.id) {
-        throw new Error(result.error || "Upload gagal. Coba lagi.");
-      }
-
+      setUploadPercent(100);
       window.location.href = `/v/${encodeURIComponent(result.id)}`;
     } catch (error) {
-      setMessage(error.message || "Tidak dapat terhubung ke server.");
-      setProgress(false);
+      setMessage(error.message || "Upload gagal karena kesalahan jaringan. Silakan coba lagi.");
+      setUploading(false);
     }
   }
 
@@ -125,16 +148,6 @@ function UploadPage() {
       <h1>Tambahkan video</h1>
 
       <form className="panel form" onSubmit={upload}>
-        <label>
-          Judul video
-          <input
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            placeholder="Judul video"
-            maxLength={120}
-          />
-        </label>
-
         <label className="file-picker">
           <UploadCloud size={28}/>
           <b>{file ? file.name : "Pilih video dari perangkat"}</b>
@@ -142,17 +155,34 @@ function UploadPage() {
           <input
             type="file"
             accept="video/mp4,video/quicktime,video/webm"
+            disabled={uploading}
             onChange={e => {
               setFile(e.target.files?.[0] || null);
               setMessage("");
+              setUploadPercent(0);
             }}
           />
         </label>
 
-        {message && <p className="error">{message}</p>}
+        {uploading && (
+          <div style={{ margin: "12px 0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+              <small>{uploadPercent >= 100 ? "Menyimpan video…" : "Mengunggah video…"}</small>
+              <b>{uploadPercent}%</b>
+            </div>
+            <progress
+              value={uploadPercent}
+              max="100"
+              style={{ width: "100%", height: "10px" }}
+              aria-label="Progres upload"
+            />
+          </div>
+        )}
 
-        <button className="primary" disabled={progress}>
-          {progress ? "Mengunggah…" : "Upload sekarang"}
+        {message && <p className="error" role="alert">{message}</p>}
+
+        <button className="primary" disabled={uploading || !file}>
+          {uploading ? "Mengunggah…" : "Upload sekarang"}
         </button>
 
         <small className="muted">
